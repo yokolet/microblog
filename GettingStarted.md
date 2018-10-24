@@ -1,39 +1,66 @@
 # Getting Started
 
 ### How this app makes its shape
-0. Update tools
+1. Update tools
 
     - Bundler
     
-    If needed, update `bundler` by `gem update bundler`.
+    It's a good idea to update Bundler before getting things started.
+    If the Bundler is not the latest or needs an update, try the
+    command below.
+
+    ```bash
+    gem update bundler
+    ```
     
     - node, yarn
     
-    Make sure node and yarn are the latest or good versions.
-    If not, update by `brew` or `nvm`.
+    The same as Bundler, it's a good idea to update node and yarn
+    if those are not the latest or good versions. Unlike Bundler,
+    there are a couple ways of installing node and yarn, for example,
+    `brew` or `nvm`. Make sure to use the same tool when those were
+    installed. Below is an example by `brew`.
 
-0. Database
+    ```bash
+    brew upgrade node yarn.
+    ```
 
-    Make sure PostgreSQL is the latest or good version.
-    Also, make sure PotgreSQL is up and running.
+2. Database
 
-1. Create and app
+    Since this app uses PostgreSQL, make sure PostgreSQL is the latest
+    or good version. Also, make sure PostgreSQL is up and running.
+    If PostgreSQL was installed by `brew` and is a brew service,
+    below is the way to check.
+
+    ```bash
+    # this tells postgresql status which should be green 'started'
+    brew services list
+    ```
+
+3. Create and app
+
+    As always, hit `rails new` command to create a Rails app.
+    This app will provide API, and use RSpec, PostgreSQL, and
+    webpacker.
 
     `$ rails new microblog --webpack --api -T -d postgresql`
 
-2. Create .ruby-version file
+4. Create .ruby-version file
 
-    Only if .ruby-version is not in the app's top directory.
-    When the version in `.ruby-version` is changed , the
-    Ruby version in Gemfile should be changed accordingly.
+    Only if `.ruby-version` is not in the app's top directory,
+    create `.ruby-version`. If auto-generated `.ruby-version` has
+    no good version, edit the file to use another version.
+    Then, check or update the Ruby version in Gemfile accordingly.
 
     ```bash
     $ cd microblog
     $ echo 2.5.1 > .ruby-version
     ```
 
-3. Add rspec-rails, factory bot, faker, shoulda and databse_cleaner gems to
-   development and test block in `Gemfile`.
+5. Add gems for development and test
+
+   Add rspec-rails, factory bot, faker, shoulda and databse_cleaner
+   gems to development and test block in `Gemfile`.
 
     ```ruby
     group :development, :test do
@@ -47,13 +74,18 @@
     end
     ```
 
-4. Install gems
+6. Install gems
+
+    Install gems added to the Gemfile.
 
     ```
     bundle install
     ```
 
-5. Initialize rspec
+7. Initialize rspec
+
+    This app doesn't have test related files since `-T` option was
+    specified at the creation. To use RSpec, initialize it.
 
     ```bash
     $ rails g rspec:install
@@ -64,14 +96,14 @@
           create  spec/rails_helper.rb
     ```
 
-    Not to push `.rspec` to a repo, add `.rspec` to `.gitignore`.
+    Then, add `.rspec` to `.gitignore` not to push `.rspec` to a repo.
 
-6. Setup databases
+8. Setup databases
 
     `$ rails db:setup`
     
     If postgresql is up and running, no need to create database manually.
-    Above command takes care of all including database creations.
+    Above command takes care of all including database creation.
 
     Check whether databases were created by `psql` command.
     
@@ -80,11 +112,16 @@
     postgres=# \l
     ```
 
-7. initialize webpacker
+    The microblog_development and microbolog_test databases should show up.
+
+9. Initialize webpacker
 
     `$ rails webpacker:install`
 
-8. create post by scaffold
+10. Create `post` by scaffolding
+
+    This app will provides `post` API. This api's version is `v1`, and
+    the path looks like, `/api/v1/posts`.
 
     ```bash
     $ rails g scaffold api/v1/post subject:string content:text
@@ -112,7 +149,7 @@
           create        spec/requests/api/v1/api_v1_posts_spec.rb
     ```
 
-9. migrate newly created post
+11. Migrate newly created post
 
     ```bash
     $ rails db:migrate
@@ -130,7 +167,7 @@
     microblog_development=# \d api_v1_posts
     ```
 
-10. edit `spec/rails_helper.rb` to configure gems
+12. Edit `spec/rails_helper.rb` to configure gems
 
     1. Database Cleaner
     
@@ -170,7 +207,7 @@
         end
         ```
 
-11. Write model test `spec/models/api/v1/post_spec.rb`
+13. Write models spec, `spec/models/api/v1/post_spec.rb`
 
     ```ruby
     require 'rails_helper'
@@ -181,12 +218,16 @@
     end
     ```
 
-    Run model spec by `rails spec:models`
+    Run models spec by
     
-    Above test fails since the model doesn't have any to
+    ```bash
+    rails spec:models
+    ```
+
+    Above test fails since the model doesn't have any clue to
     validate presences.
 
-12. Add validates_presense_of in `app/models/api/v2/post.rb`
+14. Add validates_presense_of in `app/models/api/v1/post.rb`
 
     ```ruby
     class Api::V1::Post < ApplicationRecord
@@ -195,33 +236,47 @@
     end
     ```
 
-    Run model spec again by `rails spec:models`. It should pass
-    after the change above.
+    Run models spec again by
 
-13. Write request specs for post in `spec/requests/post_spec.rc`
+    ```bash
+    rails spec:models
+    ```
 
-    {% gist 64381a2b9943f2f28ba1878f3e41f18c %}
+    Now, it should pass.
 
-14. add exception handler `app/controllers/concerns/exception_handler.rb`
+15. Write `GET` request specs for post
 
-    {% gist 46639987f061c97e92764bfb0feabf55 %}
-
-15. modify `app/controllers/application_controller.rb`
+    Edit `spec/requests/api/v1/api_v1_posts_spec.rb`. The file looks
+    like below.
 
     ```ruby
-    class ApplicationController < ActionController::API
-      include ExceptionHandler
+    require 'rails_helper'
+
+    RSpec.describe "Api::V1::Posts", type: :request do
+      let!(:posts) { create_list(:api_v1_post, 10) }
+
+      describe "GET /api_v1_posts" do
+        before { get api_v1_posts_path }
+        it "returns status code 200" do
+          expect(response).to have_http_status(200)
+        end
+
+        it "returns posts" do
+          json = JSON.parse(response.body)
+          expect(json).not_to be_empty
+          expect(json.size).to eq(10)
+        end
+      end
     end
     ```
 
-16. run request specs
+    Run requests spec by
 
     ```bash
-    $ bin/rake spec:requests
-    Running via Spring preloader in process 925
-    /Users/yoko/.rbenv/versions/2.4.1/bin/ruby -I/Users/yoko/.rbenv/versions/2.4.1/lib/ruby/gems/2.4.0/gems/rspec-core-3.6.0/lib:/Users/yoko/.rbenv/versions/2.4.1/lib/ruby/gems/2.4.0/gems/rspec-support-3.6.0/lib /Users/yoko/.rbenv/versions/2.4.1/lib/ruby/gems/2.4.0/gems/rspec-core-3.6.0/exe/rspec --pattern ./spec/requests/\*\*/\*_spec.rb
-    .............
-
-    Finished in 1.38 seconds (files took 2.01 seconds to load)
-    13 examples, 0 failures
+    rails spec:requests
     ```
+
+    Everything has been all setup by the scaffolding, so it should pass.
+
+
+For now, microblog API was confirmed to work using very basic specs.
