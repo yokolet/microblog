@@ -11,5 +11,13 @@
     "babel-preset-es2015": "^6.24.1",
     "jest": "^23.6.0",
     "webpack-dev-server": "2.11.2"
+  },
+  "jest": {
+    "roots": [
+      "spec/javascript"
+    ]
+  },
+  "scripts": {
+    "spec": "jest"
   }
 }
